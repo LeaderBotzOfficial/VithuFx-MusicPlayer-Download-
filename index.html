@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vithu Fx - Music Player Download</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- CSS VARIABLES & GLOBAL STYLES --- */
+        :root {
+            --bg-color: #050508;
+            --neon-red: #ff2a5f;
+            --neon-red-glow: rgba(255, 42, 95, 0.4);
+            --neon-cyan: #00f3ff;
+            --glass-bg: rgba(20, 20, 35, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --text-main: #f0f0f5;
+            --text-muted: #a0a0b5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(255, 42, 95, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(0, 243, 255, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* --- GLASSMORPHISM UTILITY --- */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 18px 8%;
+            z-index: 1000;
+        }
+
+        .hamburger {
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .hamburger span {
+            display: block;
+            width: 26px;
+            height: 2px;
+            background-color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+            background-color: var(--neon-red);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+            background-color: var(--neon-red);
+        }
+
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100vh;
+            background: rgba(8, 8, 16, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+            transition: right 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+            border-left: 1px solid var(--glass-border);
+            z-index: 999;
+        }
+
+        .nav-menu.active {
+            right: 0;
+        }
+
+        .nav-menu a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: var(--neon-red);
+            text-shadow: 0 0 10px var(--neon-red-glow);
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 100px 20px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px var(--neon-red-glow));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(180deg, #fff 0%, #a0a0b5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero h2 {
+            font-size: 1.2rem;
+            color: var(--neon-red);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px var(--neon-red-glow);
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            max-width: 500px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* --- BUTTONS --- */
+        .btn-download {
+            background: linear-gradient(135deg, #a80f35 0%, var(--neon-red) 100%);
+            color: #fff;
+            padding: 16px 42px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px var(--neon-red-glow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 42, 95, 0.7);
+        }
+
+        .btn-download:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* --- APP INFO CARD --- */
+        .app-info-card {
+            width: 100%;
+            padding: 20px 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .info-item span {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .info-item strong {
+            font-size: 1.05rem;
+            color: var(--text-main);
+        }
+
+        /* --- FEATURES SECTION --- */
+        .section-title {
+            width: 100%;
+            text-align: left;
+            font-size: 1.4rem;
+            font-weight: 600;
+            border-left: 4px solid var(--neon-red);
+            padding-left: 12px;
+            margin-top: 10px;
+        }
+
+        .features-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .feature-card {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateX(5px);
+            border-color: rgba(255, 42, 95, 0.3);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(255, 42, 95, 0.1);
+            color: var(--neon-red);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 42, 95, 0.2);
+        }
+
+        .feature-content h3 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .feature-content p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* --- FAQ & ABOUT --- */
+        .content-block {
+            width: 100%;
+            padding: 25px;
+        }
+
+        .content-block p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 0;
+            cursor: pointer;
+        }
+
+        .faq-item:last-child { border-bottom: none; }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding-top 0.3s ease;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 100px;
+            padding-top: 10px;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+            color: var(--neon-red);
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            width: 100%;
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 40px;
+        }
+
+        /* --- SERVER LOGS PAGE (TAB DESIGN) --- */
+        #log-page {
+            display: none;
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .log-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .log-header h2 {
+            font-size: 1.8rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+            font-family: monospace;
+        }
+
+        .status-box-wrapper {
+            margin-bottom: 25px;
+        }
+
+        .download-indicator-text {
+            font-size: 0.8rem;
+            color: var(--neon-cyan);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: monospace;
+        }
+
+        .status-box {
+            padding: 20px;
+            border-color: rgba(0, 243, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .status-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .animated-status {
+            color: var(--neon-cyan);
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--neon-cyan);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .terminal-container {
+            padding: 20px;
+            background: rgba(3, 3, 8, 0.85);
+            border-color: rgba(255, 255, 255, 0.05);
+            font-family: monospace;
+            font-size: 0.85rem;
+            height: 320px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .log-entry {
+            line-height: 1.4;
+            word-break: break-all;
+        }
+
+        .log-time { color: var(--text-muted); }
+        .log-tag { color: var(--neon-cyan); }
+        .log-val { color: var(--text-main); }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2rem; }
+            .app-info-card { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .btn-download { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-page">
+        <nav>
+            <div class="hamburger" id="hamburger-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#download" class="nav-link">Download</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#faq" class="nav-link">FAQ</a>
+                <a href="#details" class="nav-link">Website Details</a>
+            </div>
+        </nav>
+
+        <div class="container" id="home">
+            <section class="hero">
+                <img src="https://leaderr1.neocities.org/vithufx-logo.png" alt="Vithu Fx Logo" class="logo">
+                <h1>Vithu Fx</h1>
+                <h2>Music Player APK</h2>
+                <p>This is a YouTube Music cracked version and access to all songs. It is completely ad-free and requires no subscription.
+
+Once the update is released, the app will move to the main global version.</p>
+            </section>
+
+            <div id="download">
+                <button class="btn-download" id="apk-download-btn">
+                    <i class="fa-solid fa-download"></i> Download APK
+                </button>
+            </div>
+
+            <div class="glass app-info-card">
+                <div class="info-item">
+                    <span>App Name</span>
+                    <strong>Vithu Fx </strong>
+                </div>
+                <div class="info-item">
+                    <span>App Size</span>
+                    <strong>23 MB</strong>
+                </div>
+                <div class="info-item">
+                    <span>Version</span>
+                    <strong>V1.1.2(Latest)</strong>
+                </div>
+                  <div class="info-item">
+                    <span>App Type</span>
+                    <strong>Android </strong>
+                </div>
+                
+                <div class="info-item">
+                    <span>Developer</span>
+                    <strong>Vithu</strong>
+                </div>
+                <div class="info-item">
+                    <span>Source</span>
+                    <strong>Nikhil</strong>
+                </div>
+                
+                          </div>
+
+            <div class="section-title" id="features">Features</div>
+            <div class="features-wrapper">
+                <div class="glass feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="feature-content">
+                        <h3>Music Quality</h3>
+                        <p>Enjoy faster speeds, quicker downloads, and a better overall listening experience..</p>
+                    </div>
+                </div>
+                <div class="glass feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                    <div class="feature-content">
+                        <h3>Fast Performance</h3>
+                        <p>Ultra-lightweight engine optimizing system memory for zero lag performance.</p>
+                    </div>
+                </div>
+                <div class="glass feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-compact-disc"></i></div>
+                    <div class="feature-content">
+                        <h3>Background Music</h3>
+                        <p>Keep the beat running smoothly while multitasking or with screen locked.</p>
+                    </div>
+                </div>
+                <div class="glass feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="feature-content">
+                        <h3>Modern Music UI</h3>
+                        <p>Stunning customizable neon visualizers matching your favorite album art.</p>
+                    </div>
+                </div>
+                <div class="glass feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-list-check"></i></div>
+                    <div class="feature-content">
+                        <h3>Playlist & Library</h3>
+                        <p>Intelligent auto-sorting, local directory scanning, and custom playlist creation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title" id="about">About</div>
+            <div class="glass content-block">
+                <p>Vithu Fx Music Player represents the modern peak of mobile audio software. Engineered with custom decoding engines, it pushes rich, studio-grade acoustics directly to your headphones. Designed with modern aesthetics in mind, Vithu Fx delivers complete visual harmony alongside peak hardware optimizations.</p>
+            </div>
+
+            <div class="section-title" id="faq">FAQ</div>
+            <div class="glass content-block">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Is Vithu Fx Player free to install?</span>
+                        <i class="fa-solid fa-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">Yes, Vithu Fx Music Player APK is 100% free to download and use with full feature accessibility.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Which Android versions are supported?</span>
+                        <i class="fa-solid fa-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">Vithu Fx is fully optimized to run smoothly on Android versions 8.0 (Nougat) and higher.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Does it support lossless formats like FLAC?</span>
+                        <i class="fa-solid fa-chevron-down faq-icon"></i>
+                    </div>
+                    <div class="faq-answer">Absolutely. Vithu Fx supports MP3, AAC, FLAC, WAV, OGG, and several other popular audio containers natively.</div>
+                </div>
+            </div>
+
+            <div class="section-title" id="details">Website Details</div>
+            <div class="glass content-block">
+                <p>Official download node maintained by Vithu Fx digital services. Standard SSL end-to-end routing enabled. All file builds uploaded undergo real-time integrity verification checks prior to release deployment.</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Vithu Fx. All rights reserved. Built with modern web standards.</p>
+        </footer>
+    </div>
+
+    <div id="log-page">
+        <div class="log-header">
+            <h2>LeaderBotz Server Logs</h2>
+        </div>
+
+        <div class="status-box-wrapper">
+            <div class="download-indicator-text">File download started</div>
+            <div class="glass status-box">
+                <div class="status-title">APK Download...</div>
+                <div class="animated-status">
+                    <div class="spinner"></div>
+                    <span id="status-message-text">Initializing connection...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass terminal-container" id="terminal-logs">
+            </div>
+    </div>
+
+    <script>
+        // CONFIGURATION: Replace this string with your real direct APK download link
+        const DIRECT_APK_URL = "VithuFx V1.1.2.apk";
+
+        // APP INITIALIZATION & NAVIGATION LOGIC
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if current page is opened as the target server logs view
+            if (window.location.hash === '#server-logs') {
+                showLogPage();
+            }
+
+            // Hamburger menu toggle
+            const hamburger = document.getElementById('hamburger-btn');
+            const navMenu = document.getElementById('nav-menu');
+
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+
+            // Close nav when clicking links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('active');
+                });
+            });
+
+            // Accordion / FAQ logic
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    item.classList.toggle('active');
+                });
+            });
+
+            // Download Button Handler
+            const downloadBtn = document.getElementById('apk-download-btn');
+            downloadBtn.addEventListener('click', () => {
+                // Open server log window as a new tab
+                window.open(window.location.origin + window.location.pathname + '#server-logs', '_blank');
+            });
+        });
+
+        // ROUTER DISPLAY SWITCH FOR LOG PAGE
+        function showLogPage() {
+            document.getElementById('main-page').style.display = 'none';
+            document.getElementById('log-page').style.display = 'block';
+            runFuturisticLogs();
+        }
+
+        // FUTURISTIC LOGS & BROWSER API DATA COLLECTION
+        async function runFuturisticLogs() {
+            const terminal = document.getElementById('terminal-logs');
+            const statusText = document.getElementById('status-message-text');
+
+            function appendLog(tag, text) {
+                const now = new Date();
+                const timestamp = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+                
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `<span class="log-time">[${timestamp}]</span> <span class="log-tag">[${tag}]</span> <span class="log-val">${text}</span>`;
+                terminal.appendChild(entry);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            // Phase sequence setup
+            appendLog('SYSTEM', 'Initializing download bridge sequence...');
+            
+            // 1. Device and Browser Context
+            appendLog('DEVICE_UA', navigator.userAgent);
+            appendLog('PLATFORM', navigator.platform || 'Unknown platform');
+            appendLog('SCREEN', `${window.screen.width}x${window.screen.height} (${window.devicePixelRatio}x DPI)`);
+            appendLog('LANG', navigator.language);
+            appendLog('LAST_ACTION', 'Download APK button clicked');
+
+            // 2. Browser Battery API (If Supported)
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    const charging = battery.charging ? 'Plugged In' : 'On Battery';
+                    const level = Math.round(battery.level * 100) + '%';
+                    appendLog('BATTERY', `${level} (${charging})`);
+                } catch (e) {
+                    appendLog('BATTERY', 'Access Restricted');
+                }
+            } else {
+                appendLog('BATTERY', 'API Unsupported by browser');
+            }
+
+            // 3. Network Information API (If Supported)
+            if ('connection' in navigator || 'mozConnection' in navigator || 'webkitConnection' in navigator) {
+                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (conn) {
+                    appendLog('NETWORK_TYPE', conn.effectiveType || conn.type || 'Unknown');
+                    appendLog('DOWNLINK_EST', conn.downlink ? `${conn.downlink} Mbps` : 'N/A');
+                }
+            } else {
+                appendLog('NETWORK', 'Standard browser connection established');
+            }
+
+            // Dynamic IP & Download Simulation Sequence
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                appendLog('CLIENT_IP', data.ip);
+            } catch (err) {
+                appendLog('CLIENT_IP', 'Dynamic Routing Active');
+            }
+
+            // Animated Status Cycle Updates
+            const statuses = [
+                { time: 600, label: "Network Connecting...", log: "Establishing secure SSL handshake..." },
+                { time: 1500, label: "Checking...", log: "Checking server node availability & payload integrity..." },
+                { time: 2600, label: "Preparing Download...", log: "Allocating download stream buffer..." },
+                { time: 3800, label: "Starting Download...", log: "Redirecting client to application package URL..." }
+            ];
+
+            statuses.forEach(step => {
+                setTimeout(() => {
+                    statusText.textContent = step.label;
+                    appendLog('STATUS', step.log);
+                }, step.time);
+            });
+
+            // Final Redirection Trigger to Configured APK URL
+            setTimeout(() => {
+                appendLog('EXECUTE', `Target Download URL: ${DIRECT_APK_URL}`);
+                statusText.innerHTML = '<span style="color:#00f3ff;">Download Triggered!</span>';
+                
+                // Trigger real browser download
+                window.location.href = DIRECT_APK_URL;
+            }, 4800);
+        }
+    </script>
+</body>
+</html>
